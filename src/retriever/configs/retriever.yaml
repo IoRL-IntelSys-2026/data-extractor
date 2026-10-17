@@ -1,0 +1,20 @@
+# Working service config.  In the production config, allowed_collections holds
+# aliases only; experiment profiles add their own *_exp_* entries.
+# config_id is not written by hand -- it is derived from the profile name and a
+# hash of the normalised config.
+collection: mdd_chunks_v1
+allowed_collections: [mdd_chunks_v1]
+embedding: {model: BAAI/bge-m3}
+query:
+  max_tokens: 256
+  dictionary: {enabled: false, path: dictionaries/rudn_synonyms.yaml}
+search:
+  mode: dense
+  prefetch_limit: 50
+  candidates: 40
+  fusion: {type: rrf, k: 60}
+rerank: {enabled: false, model: BAAI/bge-reranker-v2-m3, max_length: 512, batch_size: 16}
+postprocess: {max_per_doc: 2}
+top_k_default: 5
+top_k_max: 20
+no_relevant: {signal: rerank_score, threshold: null}

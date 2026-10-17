@@ -1,0 +1,23 @@
+# RUDN synonym / abbreviation dictionary (C-RET-02).
+#
+# Rules: expansion happens on word boundaries; the original word is kept and the
+# full form is appended.  Ambiguous entries (ambiguous: true) are only expanded
+# when a context word is present.  The version participates in config_id.
+version: 1
+entries:
+  - {term: общага, expand: [общежитие], type: slang, ambiguous: false, source: "https://www.rudn.ru/ (проверить)"}
+  - {term: общаговский, expand: [общежитие], type: slang, ambiguous: false}
+  - {term: стипуха, expand: [стипендия], type: slang, ambiguous: false}
+  - {term: ПК, expand: ["приёмная комиссия"], type: abbr, ambiguous: true, context: [поступление, документы, подать, абитуриент]}
+  - {term: ПК, expand: ["повышение квалификации"], type: abbr, ambiguous: true, context: [курсы, преподаватель, обучение]}
+  - {term: РУДН, expand: ["Российский университет дружбы народов"], type: abbr, ambiguous: false, source: "взять с сайта"}
+  - {term: СПО, expand: ["среднее профессиональное образование"], type: abbr, ambiguous: false}
+  - {term: бакалавриат, expand: [бакалавр], type: synonym, ambiguous: false}
+  - {term: магистратура, expand: [магистр], type: synonym, ambiguous: false}
+  - {term: аспирантура, expand: [аспирант], type: synonym, ambiguous: false}
+  - {term: иностранцы, expand: [иностранные студенты], type: synonym, ambiguous: false}
+  - {term: землячество, expand: [земляки], type: synonym, ambiguous: false}
+  - {term: кампус, expand: [университетский городок], type: synonym, ambiguous: false}
+  - {term: деканат, expand: [факультет], type: synonym, ambiguous: false}
+  - {term: ВУЗ, expand: [университет], type: abbr, ambiguous: false}
+  - {term: студгородок, expand: [общежитие], type: slang, ambiguous: false}

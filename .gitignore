@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Environments
+.venv/
+venv/
+.env
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Model caches (large; never commit)
+.hf/
+HF_HOME/
+
+# Local eval outputs (reports themselves are committed; run dirs are not)
+data/eval/runs/
