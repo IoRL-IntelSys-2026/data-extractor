@@ -1,0 +1,103 @@
+from dataclasses import dataclass, field
+from typing import List, Optional
+
+@dataclass
+class TermEntry:
+    means: str                     # Основное значение
+    abbr: bool = False             # Является ли аббревиатурой
+    ambiguous: bool = False        # Есть ли другие значения
+    alternatives: List[str] = field(default_factory=list) # Другие значения, если ambiguous=True
+
+GLOSSARY = {
+    "ПК": TermEntry(
+        means="приемная комиссия",
+        abbr=True,
+        ambiguous=True,
+        alternatives=["повышение квалификации", "персональный компьютер"]
+    ),
+    "общага": TermEntry(
+        means="общежите",
+        abbr=False,
+        ambiguous=False
+    ),
+    "ВАК": TermEntry(
+        means="Высшая аттестационная комиссия",
+        abbr=True,
+        ambiguous=False
+    ),
+    "ЕГЭ": TermEntry(
+        means="Единый государственный экзамен",
+        abbr=True,
+        ambiguous=False
+    ),
+    "бюджет": TermEntry(
+        means="бюджетная форма обучения",
+        abbr=False,
+        ambiguous=False
+    ),
+    "академ": TermEntry(
+        means="академический отпуск",
+        abbr=False,
+        ambiguous=False
+    ),
+    "зачетка": TermEntry(
+        means="зачетная книжка"
+        abbr=False,
+        ambiguous=False
+    ),
+    "медосмотр": TermEntry(
+        means="медицинский осмотр"
+        abbr=False,
+        ambiguous=False
+    ),
+    "студсовет": TermEntry(
+        means="студенческий совет"
+        abbr=False,
+        ambiguous=False
+    ),
+    "ЛК": TermEntry(
+        means="личный кабинет"
+        abbr=True,
+        ambiguous=False
+    ),
+    "КДЦ": TermEntry(
+        means="клинико-диагностический центр"
+        abbr=True,
+        ambiguous=False
+    ),
+    "БРС": TermEntry(
+        means="балльно-рейтиноговая система"
+        abbr=True,
+        ambiguous=False
+    ),
+    "студенческий": TermEntry(
+        means="студенческий билет"
+        abbr=False,
+        ambiguous=False
+    ),
+    "ВКР": TermEntry(
+        means="выпускная квалификационная работа"
+        abbr=True,
+        ambiguous=False
+    ),
+    "НИР": TermEntry(
+        means="научно-исследовательская работа"
+        abbr=True,
+        ambiguous=False
+    ),
+    "СНО": TermEntry(
+        means="студенческое научное общество"
+        abbr=True,
+        ambiguous=False
+    ),
+    "ВПП": TermEntry(
+        means="высший проходной приоритет"
+        abbr=True,
+        ambiguous=False
+    ),
+    "ОВП": TermEntry(
+        means="основной высший приорите"
+        abbr=True,
+        ambiguous=False
+    ),
+}
