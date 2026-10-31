@@ -5,19 +5,44 @@
 # when a context word is present.  The version participates in config_id.
 version: 1
 entries:
-  - {term: общага, expand: [общежитие], type: slang, ambiguous: false, source: "https://www.rudn.ru/ (проверить)"}
-  - {term: общаговский, expand: [общежитие], type: slang, ambiguous: false}
-  - {term: стипуха, expand: [стипендия], type: slang, ambiguous: false}
-  - {term: ПК, expand: ["приёмная комиссия"], type: abbr, ambiguous: true, context: [поступление, документы, подать, абитуриент]}
-  - {term: ПК, expand: ["повышение квалификации"], type: abbr, ambiguous: true, context: [курсы, преподаватель, обучение]}
-  - {term: РУДН, expand: ["Российский университет дружбы народов"], type: abbr, ambiguous: false, source: "взять с сайта"}
-  - {term: СПО, expand: ["среднее профессиональное образование"], type: abbr, ambiguous: false}
-  - {term: бакалавриат, expand: [бакалавр], type: synonym, ambiguous: false}
-  - {term: магистратура, expand: [магистр], type: synonym, ambiguous: false}
-  - {term: аспирантура, expand: [аспирант], type: synonym, ambiguous: false}
-  - {term: иностранцы, expand: [иностранные студенты], type: synonym, ambiguous: false}
-  - {term: землячество, expand: [земляки], type: synonym, ambiguous: false}
-  - {term: кампус, expand: [университетский городок], type: synonym, ambiguous: false}
-  - {term: деканат, expand: [факультет], type: synonym, ambiguous: false}
-  - {term: ВУЗ, expand: [университет], type: abbr, ambiguous: false}
-  - {term: студгородок, expand: [общежитие], type: slang, ambiguous: false}
+  - {term: общага, expand: [общежитие], type: slang, ambiguous: false, source: "https://www.rudn.ru/life/accomodation"}
+  - {term: общаговский, expand: [общежитие], type: slang, ambiguous: false, source: "https://www.rudn.ru/life/accomodation"}
+  - {term: стипуха, expand: [стипендия], type: slang, ambiguous: false, source: "https://www.rudn.ru/education/scholarships"}
+  - {term: ПК, expand: ["приёмная комиссия"], type: abbr, ambiguous: true, context: [поступление, документы, подать, абитуриент], source: "https://admission.rudn.ru/"}
+  - {term: ПК, expand: ["повышение квалификации"], type: abbr, ambiguous: true, context: [курсы, преподаватель, обучение], source: "https://dpo.rudn.ru/"}
+  - {term: РУДН, expand: ["Российский университет дружбы народов"], type: abbr, ambiguous: false, source: "https://www.rudn.ru/"}
+  - {term: СПО, expand: ["среднее профессиональное образование"], type: abbr, ambiguous: false, source: "https://admission.rudn.ru/spo/"}
+  - {term: бакалавриат, expand: [бакалавр], type: synonym, ambiguous: false, source: "https://admission.rudn.ru/undergraduate/"}
+  - {term: магистратура, expand: [магистр], type: synonym, ambiguous: false, source: "https://admission.rudn.ru/master/"}
+  - {term: аспирантура, expand: [аспирант], type: synonym, ambiguous: false, source: "https://admission.rudn.ru/phd/"}
+  - {term: иностранцы, expand: ["иностранные студенты"], type: synonym, ambiguous: false, source: "https://international.rudn.ru/"}
+  - {term: землячество, expand: [земляки], type: synonym, ambiguous: false, source: "https://www.rudn.ru/life/international-clubs"}
+  - {term: кампус, expand: ["университетский городок"], type: synonym, ambiguous: false, source: "https://www.rudn.ru/life/accomodation"}
+  - {term: деканат, expand: [факультет], type: synonym, ambiguous: false, source: "https://www.rudn.ru/education/faculties"}
+  - {term: ВУЗ, expand: [университет], type: abbr, ambiguous: false, source: "https://www.rudn.ru/"}
+  - {term: студгородок, expand: [общежитие], type: slang, ambiguous: false, source: "https://www.rudn.ru/life/accomodation"}
+  - {term: препод, expand: [преподаватель], type: slang, ambiguous: false, source: "https://www.rudn.ru/about/staff"}
+  - {term: физра, expand: ["физическая культура"], type: slang, ambiguous: false, source: "https://www.rudn.ru/education/sports"}
+  - {term: лаба, expand: ["лабораторная работа"], type: slang, ambiguous: false, source: "https://www.rudn.ru/science/laboratories"}
+  - {term: курсач, expand: ["курсовая работа"], type: slang, ambiguous: false, source: "https://www.rudn.ru/education/rules"}
+  - {term: ТУИС, expand: ["Телекоммуникационная учебно-информационная система"], type: abbr, ambiguous: false, source: "https://esystem.rudn.ru/"}
+  - {term: БРС, expand: ["Балльно-рейтинговая система"], type: abbr, ambiguous: false, source: "https://www.rudn.ru/education/rules"}
+  - {term: матпомощь, expand: ["материальная помощь"], type: slang, ambiguous: false, source: "https://www.rudn.ru/education/scholarships"}
+  - {term: допса, expand: ["дополнительная сессия"], type: slang, ambiguous: false, source: "https://www.rudn.ru/education/rules"}
+  - {term: ИИЯ, expand: ["Институт иностранных языков"], type: abbr, ambiguous: false, source: "https://iiya.rudn.ru/"}
+  - {term: МИ, expand: ["Медицинский институт"], type: abbr, ambiguous: true, context: [врач, ординатура, лечебное дело, стоматология], source: "https://med.rudn.ru/"}
+  - {term: ЮИ, expand: ["Юридический институт"], type: abbr, ambiguous: false, source: "https://law.rudn.ru/"}
+  - {term: ИРЯ, expand: ["Институт русского языка"], type: abbr, ambiguous: false, source: "https://iru.rudn.ru/"}
+  - {term: ПФ, expand: ["Подготовительный факультет"], type: abbr, ambiguous: true, context: [русский язык, иностранцы, подготовка], source: "https://ru.rudn.ru/"}
+  - {term: ИГБиТ, expand: ["Институт гостиничного бизнеса и туризма"], type: abbr, ambiguous: false, source: "https://igbit.rudn.ru/"}
+  - {term: ФМиЕН, expand: ["Факультет физико-математических и естественных наук"], type: abbr, ambiguous: false, source: "https://sci.rudn.ru/"}
+  - {term: ФГСН, expand: ["Факультет гуманитарных и социальных наук"], type: abbr, ambiguous: false, source: "https://fgss.rudn.ru/"}
+  - {term: ИА, expand: ["Инженерная академия"], type: abbr, ambiguous: true, context: [инженер, строительство, механика], source: "https://eng.rudn.ru/"}
+  - {term: абитура, expand: [абитуриент], type: slang, ambiguous: false, source: "https://admission.rudn.ru/"}
+  - {term: ординатура, expand: [ординатор], type: synonym, ambiguous: false, source: "https://admission.rudn.ru/residency/"}
+  - {term: ДПО, expand: ["дополнительное профессиональное образование"], type: abbr, ambiguous: false, source: "https://dpo.rudn.ru/"}
+  - {term: ВНЖ, expand: ["вид на жительство"], type: abbr, ambiguous: false, source: "https://www.rudn.ru/life/visa-and-registration"}
+  - {term: миграционка, expand: ["миграционная карта"], type: slang, ambiguous: false, source: "https://www.rudn.ru/life/visa-and-registration"}
+  - {term: dorm, expand: [dormitory], type: english, ambiguous: false, source: "https://eng.rudn.ru/life/accomodation"}
+  - {term: scholarship, expand: [stipend], type: english, ambiguous: false, source: "https://eng.rudn.ru/education/scholarships"}
+  - {term: ГМУ, expand: ["государственное и муниципальное управление"], type: abbr, ambiguous: false, source: "https://www.rudn.ru/education/educational-programs/52431"}
