@@ -1,0 +1,97 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Retriever API (uvicorn)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "retriever.api:app",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "8001"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "RETRIEVER_CONFIG": "${workspaceFolder}/src/retriever/configs/retriever.yaml",
+                "RETRIEVER_PORT": "8001",
+                "LOG_LEVEL": "INFO"
+            }
+        },
+        {
+            "name": "Retriever API (as module)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "retriever.api",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "RETRIEVER_PORT": "8001",
+                "LOG_LEVEL": "INFO"
+            }
+        },
+        {
+            "name": "pytest: all tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-q"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: unit only (no Qdrant)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-m",
+                "not integration",
+                "-q"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: current file",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "ret-eval: dense on k6 fixture",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "retriever.eval.runner",
+            "args": [
+                "--config",
+                "${workspaceFolder}/src/retriever/configs/profiles/dense.yaml",
+                "--dataset",
+                "${workspaceFolder}/tests/fixtures/k6/k6_sample.jsonl",
+                "--split",
+                "dev",
+                "--variant",
+                "last"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}

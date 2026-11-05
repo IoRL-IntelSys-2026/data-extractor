@@ -1,0 +1,11 @@
+# Isolated Qdrant for integration tests and the K2 fixture.
+#
+#   docker compose -f docker-compose.test.yml up -d
+#   QDRANT_TEST_URL=http://localhost:16333 pytest -m integration
+#
+# It uses no named volumes so a teardown (`down -v`) leaves no state behind.
+services:
+  qdrant-test:
+    image: qdrant/qdrant:v1.19.1
+    ports:
+      - "16333:6333"

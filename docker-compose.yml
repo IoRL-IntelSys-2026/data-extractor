@@ -1,0 +1,32 @@
+# Retriever service stack (deliverable D7).
+#
+# Qdrant is the shared dependency (D1).  The retriever joins the existing
+# network and talks to it by service name.  The answer service (team 4) reaches
+# the retriever at RETRIEVER_URL=http://retriever-api:8001.
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.1
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  retriever-api:
+    build: .
+    command: uvicorn retriever.api:app --host 0.0.0.0 --port 8001
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-}
+      RETRIEVER_CONFIG: /app/src/retriever/configs/retriever.yaml
+      RETRIEVER_PORT: "8001"
+      LOG_LEVEL: INFO
+    depends_on:
+      - qdrant
+    ports:
+      - "8001:8001"
+    # One worker only: each uvicorn worker would load its own copy of the
+    # embedding model (and reranker) into memory (readme 3.2.1, C-RET-08).
+
+volumes:
+  qdrant_storage:

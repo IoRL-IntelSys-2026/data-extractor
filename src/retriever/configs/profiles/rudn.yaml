@@ -1,0 +1,17 @@
+# RUDN profile: dictionary on, calibrated no_relevant threshold.
+collection: rudn_current
+allowed_collections: [mdd_current, rudn_current]
+embedding: {model: BAAI/bge-m3}
+query:
+  max_tokens: 256
+  dictionary: {enabled: true, path: dictionaries/rudn_synonyms.yaml}
+search:
+  mode: hybrid
+  prefetch_limit: 50
+  candidates: 40
+  fusion: {type: rrf, k: 60}
+rerank: {enabled: true, model: BAAI/bge-reranker-v2-m3, max_length: 512, batch_size: 16}
+postprocess: {max_per_doc: 2}
+top_k_default: 5
+top_k_max: 20
+no_relevant: {signal: rerank_score, threshold: null}
