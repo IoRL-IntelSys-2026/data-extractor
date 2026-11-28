@@ -1,0 +1,516 @@
+openapi: 3.1.0
+
+info:
+  title: Retriever service
+  version: 0.1.0
+  description: |
+    HTTP-сервис ретривера для RAG-системы университета.
+    Принимает поисковый запрос, возвращает ранжированные фрагменты документов
+    (приказы, внутренние документы) из Qdrant.
+
+    Контракт зафиксирован в K3 (INV-RET-01 / INV-RET-05 / INV-RET-06).
+    Запрос — самостоятельный вопрос: поле `history` запрещено (`extra="forbid"`),
+    переформулировка вопроса — задача вызывающей стороны, не ретривера.
+
+servers:
+  - url: http://localhost:8001
+    description: Локальный запуск (по умолчанию RETRIEVER_PORT=8001)
+
+tags:
+  - name: retrieval
+    description: Поиск фрагментов по запросу
+  - name: health
+    description: Проверка состояния сервиса
+
+paths:
+  /retrieve:
+    post:
+      tags: [retrieval]
+      summary: Найти релевантные фрагменты по запросу
+      operationId: retrieve
+      description: |
+        Основная операция ретривера.
+
+        **Валидация:**
+        - `query` не может быть пустым (пробелы не считаются) → 422.
+        - `top_k` должен быть в диапазоне `1..top_k_max` (в текущем конфиге `1..20`) → 422.
+        - `collection`, если указан, должен входить в `allowed_collections`
+          (в текущем конфиге — только `mdd_chunks_v1`) → 422.
+        - Лишние поля (например, `history`) запрещены → 422.
+
+        **Поведение:**
+        - Если `top_k` не указан, используется `top_k_default` из конфига (5).
+        - Если `collection` не указан, используется `collection` из конфига.
+        - Поле `no_relevant` в ответе = `true`, если не найдено ни одного кандидата
+          или сработал порог `no_relevant.threshold` (если он задан).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetrievalRequest'
+            examples:
+              minimal:
+                summary: Минимальный запрос
+                value:
+                  query: "как подать заявление в общежитие"
+              with_top_k:
+                summary: С указанием top_k
+                value:
+                  query: "правила приёма в аспирантуру"
+                  top_k: 10
+              with_filters:
+                summary: С фильтрами
+                value:
+                  query: "приказ о стипендии"
+                  filters:
+                    lang: "ru"
+                    section: ["приказы", "положения"]
+                    content_type: "pdf"
+              debug:
+                summary: С отладочной информацией
+                value:
+                  query: "перевод с платного на бюджет"
+                  top_k: 3
+                  debug: true
+      responses:
+        '200':
+          description: Успешный поиск (возможно, с пустым списком фрагментов)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrievalResponse'
+              examples:
+                found:
+                  summary: Найдены фрагменты
+                  value:
+                    search_query: "как подать заявление в общежитие"
+                    no_relevant: false
+                    collection: "mdd_chunks_v1"
+                    config_id: "retriever@c3371995"
+                    latency_ms: 42.5
+                    chunks:
+                      - chunk_id: "doc-17-chunk-3"
+                        doc_id: "doc-17"
+                        url: "https://example.edu/docs/dorm-guide.pdf"
+                        title: "Правила предоставления общежития"
+                        text: "Для подачи заявления необходимо..."
+                        score: 0.87
+                        rank: 1
+                        payload:
+                          page: 12
+                          section: "Порядок подачи"
+                    debug: null
+                no_relevant:
+                  summary: Ничего релевантного
+                  value:
+                    search_query: "квантовая хромодинамика"
+                    no_relevant: true
+                    collection: "mdd_chunks_v1"
+                    config_id: "retriever@c3371995"
+                    latency_ms: 8.1
+                    chunks: []
+        '422':
+          description: |
+            Ошибка валидации. Формат `detail` зависит от источника:
+            - строка — кастомные проверки в обработчике (`top_k`, `collection`);
+            - массив объектов — ошибки Pydantic (пустой `query`, лишние поля).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              examples:
+                blank_query:
+                  summary: Пустой query
+                  value:
+                    detail:
+                      - loc: ["body", "query"]
+                        msg: "Value error, query must not be empty"
+                        type: "value_error"
+                top_k_too_large:
+                  summary: top_k вне диапазона
+                  value:
+                    detail: "top_k must be between 1 and 20"
+                forbidden_history:
+                  summary: Лишнее поле history
+                  value:
+                    detail:
+                      - loc: ["body", "history"]
+                        msg: "Extra inputs are not permitted"
+                        type: "extra_forbidden"
+                bad_collection:
+                  summary: Недопустимая коллекция
+                  value:
+                    detail: "collection must be one of ['mdd_chunks_v1']"
+        '503':
+          description: |
+            Бэкенд недоступен: Qdrant, реранкер или иная внутренняя ошибка поиска.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                qdrant_down:
+                  value:
+                    detail: "retrieval backend unavailable: could not connect to Qdrant"
+                reranker_down:
+                  value:
+                    detail: "reranker unavailable: model not loaded"
+        '500':
+          description: |
+            CollectionGuardError (несовпадение модели/коллекции). На практике
+            происходит на старте, а не на запросе; обработчик — safety net.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags: [health]
+      summary: Проверка состояния сервиса
+      operationId: healthCheck
+      description: |
+        Возвращает статус сервиса, список коллекций с разрешёнными именами,
+        имя модели эмбеддингов, `config_id` и признак загруженности реранкера.
+      responses:
+        '200':
+          description: Сервис работает (статус `ok` или `degraded`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                ok:
+                  value:
+                    status: "ok"
+                    collections:
+                      mdd_chunks_v1: "mdd_chunks_v1"
+                    embedding_model: "BAAI/bge-m3"
+                    config_id: "retriever@c3371995"
+                    reranker_loaded: false
+
+components:
+  schemas:
+
+    # ---- Request ---------------------------------------------------------
+
+    FilterSpec:
+      type: object
+      description: |
+        Фильтры по полям payload (INV-RET-06). Значение каждого поля —
+        либо строка, либо список строк (семантика «любой из»).
+        Неизвестные имена полей запрещены (`extra="forbid"`).
+        Значения не валидируются: неизвестный `section` даёт пустой результат,
+        а не ошибку.
+      additionalProperties: false
+      properties:
+        lang:
+          $ref: '#/components/schemas/StringOrStringList'
+        section:
+          $ref: '#/components/schemas/StringOrStringList'
+        source:
+          $ref: '#/components/schemas/StringOrStringList'
+        content_type:
+          $ref: '#/components/schemas/StringOrStringList'
+        doc_id:
+          $ref: '#/components/schemas/StringOrStringList'
+
+    StringOrStringList:
+      description: Строка или список строк (или null)
+      anyOf:
+        - type: string
+        - type: array
+          items:
+            type: string
+        - type: 'null'
+      default: null
+
+    RetrievalRequest:
+      type: object
+      description: |
+        Тело запроса `POST /retrieve` (K3). `extra="forbid"` означает, что
+        поле `history` и любые другие неизвестные поля отклоняются с 422
+        (INV-RET-05): ретривер не переформулирует вопросы.
+      additionalProperties: false
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: |
+            Поисковый запрос — самостоятельный вопрос. Не может быть пустым
+            или состоять из пробелов (иначе 422).
+          minLength: 1
+          pattern: '\S'
+          examples:
+            - "как подать заявление в общежитие"
+        top_k:
+          description: |
+            Сколько фрагментов вернуть. Если не указан — `top_k_default`
+            из конфига (5). Допустимый диапазон: `1..top_k_max` (в текущем
+            конфиге `1..20`).
+          anyOf:
+            - type: integer
+              minimum: 1
+              maximum: 20
+            - type: 'null'
+          default: null
+        filters:
+          description: Фильтры по полям payload.
+          anyOf:
+            - $ref: '#/components/schemas/FilterSpec'
+            - type: 'null'
+          default: null
+        collection:
+          description: |
+            Имя коллекции. Если не указано — `collection` из конфига.
+            Если указано, должно входить в `allowed_collections`
+            (в текущем конфиге — только `mdd_chunks_v1`), иначе 422.
+          anyOf:
+            - type: string
+            - type: 'null'
+          default: null
+          examples:
+            - "mdd_chunks_v1"
+        debug:
+          type: boolean
+          description: |
+            Если `true`, в ответ добавляется объект `debug` с временами этапов
+            и кандидатами до реранкера.
+          default: false
+
+    # ---- Response --------------------------------------------------------
+
+    RetrievedChunk:
+      type: object
+      description: Один найденный фрагмент (K3 chunk object).
+      additionalProperties: false
+      required:
+        - chunk_id
+        - doc_id
+        - url
+        - title
+        - text
+        - score
+        - rank
+      properties:
+        chunk_id:
+          type: string
+          description: Уникальный идентификатор фрагмента в Qdrant.
+          examples:
+            - "doc-17-chunk-3"
+        doc_id:
+          type: string
+          description: Идентификатор документа-источника.
+          examples:
+            - "doc-17"
+        url:
+          type: string
+          description: Ссылка на документ-источник.
+          examples:
+            - "https://example.edu/docs/dorm-guide.pdf"
+        title:
+          type: string
+          description: Заголовок документа.
+          examples:
+            - "Правила предоставления общежития"
+        text:
+          type: string
+          description: Текст фрагмента.
+        score:
+          type: number
+          description: |
+            Оценка релевантности. Шкала зависит от режима поиска:
+            cosine для dense, dot/sparse для sparse, RRF для гибрида,
+            rerank_score при включённом реранкере.
+          examples:
+            - 0.87
+        rank:
+          type: integer
+          description: Позиция в итоговом ранжировании (1 — самый релевантный).
+          minimum: 1
+          examples:
+            - 1
+        payload:
+          description: Произвольные метаданные фрагмента из Qdrant.
+          anyOf:
+            - type: object
+              additionalProperties: true
+            - type: 'null'
+          default: null
+          examples:
+            - page: 12
+              section: "Порядок подачи"
+
+    DebugInfo:
+      type: object
+      description: |
+        Отладочная информация. Присутствует только при `debug = true`.
+        `extra="allow"` — могут быть дополнительные поля.
+      additionalProperties: true
+      properties:
+        timing_ms:
+          type: object
+          description: Времена этапов пайплайна в миллисекундах.
+          additionalProperties:
+            type: number
+          default: {}
+          examples:
+            - embedding: 12.3
+              search: 5.6
+              rerank: 8.9
+        candidates:
+          type: array
+          description: Кандидаты до реранкера (произвольные словари).
+          items:
+            type: object
+            additionalProperties: true
+          default: []
+        relevance_signal:
+          description: Значение сигнала релевантности (если применимо).
+          anyOf:
+            - type: number
+            - type: 'null'
+          default: null
+        resolved_collection:
+          description: Фактически использованная коллекция (после guard).
+          anyOf:
+            - type: string
+            - type: 'null'
+          default: null
+
+    RetrievalResponse:
+      type: object
+      description: Тело ответа `POST /retrieve` (K3).
+      additionalProperties: false
+      required:
+        - search_query
+        - no_relevant
+        - collection
+        - config_id
+        - latency_ms
+      properties:
+        search_query:
+          type: string
+          description: |
+            Запрос, который фактически ушёл в поиск. Никогда не null (INV-RET-01).
+        no_relevant:
+          type: boolean
+          description: |
+            `true`, если не найдено ни одного кандидата или сработал порог
+            `no_relevant.threshold` (если он задан).
+        collection:
+          type: string
+          description: Коллекция, по которой выполнялся поиск.
+          examples:
+            - "mdd_chunks_v1"
+        config_id:
+          type: string
+          description: |
+            Идентификатор профиля конфигурации: `<имя профиля>@<8 hex>`.
+          pattern: '^[^@]+@[0-9a-f]{8}$'
+          examples:
+            - "retriever@c3371995"
+        latency_ms:
+          type: number
+          description: Полное время обработки запроса, мс.
+          examples:
+            - 42.5
+        chunks:
+          type: array
+          description: Ранжированные фрагменты (самый релевантный — первый).
+          items:
+            $ref: '#/components/schemas/RetrievedChunk'
+          default: []
+        debug:
+          description: Отладочная информация (только при `debug = true`).
+          anyOf:
+            - $ref: '#/components/schemas/DebugInfo'
+            - type: 'null'
+          default: null
+
+    HealthResponse:
+      type: object
+      description: Тело ответа `GET /health`.
+      additionalProperties: true
+      required:
+        - status
+        - embedding_model
+        - config_id
+        - reranker_loaded
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+          description: |
+            `ok` — всё работает; `degraded` — сервис отвечает, но есть проблемы
+            (например, часть коллекций недоступна).
+        collections:
+          type: object
+          description: |
+            Карта «алиас → фактическое имя коллекции» для всех разрешённых
+            коллекций.
+          additionalProperties:
+            type: string
+          default: {}
+          examples:
+            - mdd_chunks_v1: "mdd_chunks_v1"
+        embedding_model:
+          type: string
+          description: Имя модели эмбеддингов из конфига.
+          examples:
+            - "BAAI/bge-m3"
+        config_id:
+          type: string
+          description: Идентификатор профиля конфигурации.
+          pattern: '^[^@]+@[0-9a-f]{8}$'
+          examples:
+            - "retriever@c3371995"
+        reranker_loaded:
+          type: boolean
+          description: Загружен ли реранкер.
+          examples:
+            - false
+
+    # ---- Errors ----------------------------------------------------------
+
+    ValidationError:
+      type: object
+      description: Одна ошибка валидации Pydantic.
+      required: [loc, msg, type]
+      properties:
+        loc:
+          type: array
+          description: Путь до поля.
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+        type:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      description: |
+        Ответ 422. `detail` — либо строка (кастомные проверки), либо массив
+        объектов `ValidationError` (ошибки Pydantic).
+      required: [detail]
+      properties:
+        detail:
+          anyOf:
+            - type: string
+            - type: array
+              items:
+                $ref: '#/components/schemas/ValidationError'
+
+    ErrorResponse:
+      type: object
+      description: |
+        Универсальный ответ с ошибкой (`{"detail": "<строка>"}`).
+      required: [detail]
+      properties:
+        detail:
+          type: string
